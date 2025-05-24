@@ -8,6 +8,7 @@ from router import Router
 from packet import Packet
 import json
 import heapq
+import time
 
 class LSrouter(Router):
     """Link state routing protocol implementation.
@@ -67,8 +68,8 @@ class LSrouter(Router):
                     
                     # Forward the packet to all other neighbors
                     for p in self.neighbors:
-                        if p != port:  # Don't send back to the source
-                            self.send(p, packet)
+                        if p != port: # Don't send back to the source
+                            self.send(p, packet) 
             except Exception:
                 # Handle any parsing errors silently
                 pass
@@ -142,6 +143,9 @@ class LSrouter(Router):
             # Create a new routing packet
             packet = Packet(Packet.ROUTING, self.addr, self.neighbors[port], ls_content)
             self.send(port, packet)
+        
+        # Update last_time to prevent immediate periodic broadcast
+        self.last_time = int(round(time.time() * 1000))
 
     def calculate_forwarding_table(self):
         """Calculate the forwarding table using Dijkstra's algorithm."""
@@ -200,11 +204,8 @@ class LSrouter(Router):
         
         # Start from destination and work backwards
         current = destination
-        next_node = None
-        
         # Find the first node directly connected to this router
         while previous[current] != self.addr:
-            next_node = current
             current = previous[current]
             # If we hit a dead end, the route is not complete
             if current is None:
